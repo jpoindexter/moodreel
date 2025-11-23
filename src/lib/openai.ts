@@ -1,4 +1,10 @@
 import OpenAI from 'openai'
+import { validateEnv } from './env'
+
+// Validate environment on module load
+if (typeof window === 'undefined') {
+  validateEnv()
+}
 
 export const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -10,6 +16,11 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     model: 'text-embedding-3-small',
     input: text,
   })
+
+  if (!response.data || response.data.length === 0) {
+    throw new Error('No embedding returned from OpenAI')
+  }
+
   return response.data[0].embedding
 }
 
@@ -41,7 +52,16 @@ Be specific and evocative. Focus on the feeling and aesthetic, not plot summary.
     temperature: 0.7,
   })
 
-  return JSON.parse(response.choices[0].message.content!)
+  const content = response.choices[0]?.message?.content
+  if (!content) {
+    throw new Error('No response content from OpenAI')
+  }
+
+  try {
+    return JSON.parse(content)
+  } catch {
+    throw new Error('Invalid JSON response from OpenAI')
+  }
 }
 
 // Generate explanation for why a movie matches
@@ -65,5 +85,10 @@ Write 1-2 sentences explaining the vibe connection. Focus on feeling, not plot. 
     max_tokens: 100,
   })
 
-  return response.choices[0].message.content!.trim()
+  const content = response.choices[0]?.message?.content
+  if (!content) {
+    throw new Error('No response content from OpenAI')
+  }
+
+  return content.trim()
 }

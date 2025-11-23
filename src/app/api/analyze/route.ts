@@ -24,7 +24,17 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { title, year } = await req.json()
+    let body
+    try {
+      body = await req.json()
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' },
+        { status: 400 }
+      )
+    }
+
+    const { title, year } = body
 
     // Validate input
     const titleValidation = validateTitle(title)
@@ -61,11 +71,13 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Safe date parsing
+    const movieYear = tmdbMovie.release_date
+      ? new Date(tmdbMovie.release_date).getFullYear()
+      : new Date().getFullYear()
+
     // Analyze the movie's vibe using GPT
-    const vibeAnalysis = await analyzeMovieVibe(
-      tmdbMovie.title,
-      new Date(tmdbMovie.release_date).getFullYear()
-    )
+    const vibeAnalysis = await analyzeMovieVibe(tmdbMovie.title, movieYear)
 
     const vibeProfile: VibeProfile = vibeAnalysis.vibeProfile
     const vibeSummary: string = vibeAnalysis.vibeSummary
@@ -88,7 +100,7 @@ export async function POST(req: NextRequest) {
     // Create movie record
     const movie: Omit<Movie, 'id'> = {
       title: tmdbMovie.title,
-      year: new Date(tmdbMovie.release_date).getFullYear(),
+      year: movieYear,
       posterUrl: getPosterUrl(tmdbMovie.poster_path),
       overview: tmdbMovie.overview,
       vibeProfile,

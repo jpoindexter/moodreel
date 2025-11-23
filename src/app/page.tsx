@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, Heart, Sparkles, Film, AlertCircle, RefreshCw } from 'lucide-react'
+import { Heart, Sparkles, Film, AlertCircle, RefreshCw, SearchX } from 'lucide-react'
 import { MovieCard } from '@/components/MovieCard'
 import { SearchInput } from '@/components/SearchInput'
 import { VibeLoader } from '@/components/VibeLoader'
@@ -175,7 +175,7 @@ export default function Home() {
         {recommendations.length > 0 && (
           <div>
             <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
-              <Heart className="w-5 h-5 text-pink-400" />
+              <Heart className="w-5 h-5 text-pink-400" aria-hidden="true" />
               Movies with similar vibes
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -190,6 +190,25 @@ export default function Home() {
                 />
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Empty Recommendations State */}
+        {sourceMovie && !loading && recommendations.length === 0 && (
+          <div className="text-center py-12">
+            <SearchX className="w-12 h-12 mx-auto mb-4 text-zinc-600" aria-hidden="true" />
+            <h3 className="text-lg font-medium text-zinc-300 mb-2">
+              No similar vibes found
+            </h3>
+            <p className="text-zinc-500 mb-4">
+              We couldn&apos;t find movies with matching vibes in our database yet.
+            </p>
+            <button
+              onClick={() => { setSourceMovie(null); setQuery('') }}
+              className="text-purple-400 hover:text-purple-300 text-sm"
+            >
+              Try another movie
+            </button>
           </div>
         )}
 

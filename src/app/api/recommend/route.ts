@@ -23,7 +23,17 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { movieId, limit = 8 } = await req.json()
+    let body
+    try {
+      body = await req.json()
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' },
+        { status: 400 }
+      )
+    }
+
+    const { movieId, limit = 8 } = body
 
     // Validate inputs
     const idValidation = validateUUID(movieId)
