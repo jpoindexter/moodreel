@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Production optimizations
+  poweredByHeader: false,
+  compress: true,
+
   images: {
     remotePatterns: [
       {

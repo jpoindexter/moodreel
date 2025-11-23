@@ -10,7 +10,12 @@ export const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
-// Generate embedding for vibe profile text
+/**
+ * Generate a vector embedding for vibe profile text using OpenAI's embedding model.
+ * @param text - The vibe profile text to embed
+ * @returns Array of 1536 floating point numbers representing the embedding
+ * @throws Error if OpenAI API fails or returns no embedding
+ */
 export async function generateEmbedding(text: string): Promise<number[]> {
   const response = await openai.embeddings.create({
     model: 'text-embedding-3-small',
@@ -24,7 +29,13 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   return response.data[0].embedding
 }
 
-// Analyze a movie's vibe using GPT
+/**
+ * Analyze a movie's vibe using GPT to generate a structured vibe profile.
+ * @param title - The movie title to analyze
+ * @param year - Optional release year for disambiguation
+ * @returns Object containing vibeProfile and vibeSummary
+ * @throws Error if OpenAI API fails or returns invalid JSON
+ */
 export async function analyzeMovieVibe(title: string, year?: number) {
   const prompt = `Analyze the vibe of the movie "${title}"${year ? ` (${year})` : ''}.
 
@@ -64,7 +75,15 @@ Be specific and evocative. Focus on the feeling and aesthetic, not plot summary.
   }
 }
 
-// Generate explanation for why a movie matches
+/**
+ * Generate a natural language explanation for why two movies have similar vibes.
+ * @param sourceTitle - The original movie the user searched for
+ * @param targetTitle - The recommended movie
+ * @param sourceVibe - Vibe summary of the source movie
+ * @param targetVibe - Vibe summary of the target movie
+ * @returns 1-2 sentence explanation of the vibe connection
+ * @throws Error if OpenAI API fails
+ */
 export async function generateVibeExplanation(
   sourceTitle: string,
   targetTitle: string,

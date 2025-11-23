@@ -17,27 +17,48 @@ export async function searchMovie(title: string, year?: number): Promise<TMDBMov
     ...(year && { year: year.toString() }),
   })
 
-  const response = await fetch(`${TMDB_BASE_URL}/search/movie?${params}`)
-  if (!response.ok) return null
-  const data = await response.json()
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 10000) // 10s timeout
 
-  if (data.results && data.results.length > 0) {
-    const movie = data.results[0]
-    // Get additional details including IMDB ID
-    const details = await getMovieDetails(movie.id)
-    return { ...movie, imdb_id: details?.imdb_id }
+  try {
+    const response = await fetch(`${TMDB_BASE_URL}/search/movie?${params}`, {
+      signal: controller.signal
+    })
+    clearTimeout(timeoutId)
+    if (!response.ok) return null
+    const data = await response.json()
+
+    if (data.results && data.results.length > 0) {
+      const movie = data.results[0]
+      // Get additional details including IMDB ID
+      const details = await getMovieDetails(movie.id)
+      return { ...movie, imdb_id: details?.imdb_id }
+    }
+
+    return null
+  } catch {
+    clearTimeout(timeoutId)
+    return null
   }
-
-  return null
 }
 
 export async function getMovieDetails(tmdbId: number): Promise<TMDBMovie | null> {
-  const response = await fetch(
-    `${TMDB_BASE_URL}/movie/${tmdbId}?api_key=${TMDB_API_KEY}`
-  )
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 10000) // 10s timeout
 
-  if (!response.ok) return null
-  return response.json()
+  try {
+    const response = await fetch(
+      `${TMDB_BASE_URL}/movie/${tmdbId}?api_key=${TMDB_API_KEY}`,
+      { signal: controller.signal }
+    )
+    clearTimeout(timeoutId)
+
+    if (!response.ok) return null
+    return response.json()
+  } catch {
+    clearTimeout(timeoutId)
+    return null
+  }
 }
 
 export function getPosterUrl(posterPath: string | null, size: 'w200' | 'w500' = 'w500'): string | null {
