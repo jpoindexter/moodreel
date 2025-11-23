@@ -21,11 +21,22 @@ export function middleware(request: NextRequest) {
     'max-age=31536000; includeSubDomains'
   )
 
-  // Content Security Policy
-  response.headers.set(
-    'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' https://image.tmdb.org https://m.media-amazon.com data:; connect-src 'self' https://api.openai.com https://api.themoviedb.org; font-src 'self'"
-  )
+  // Content Security Policy - stricter for production
+  const isDev = process.env.NODE_ENV === 'development'
+  const cspDirectives = [
+    "default-src 'self'",
+    isDev
+      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+      : "script-src 'self' 'unsafe-inline'", // unsafe-eval only in dev for HMR
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' https://image.tmdb.org https://m.media-amazon.com data: blob:",
+    "connect-src 'self' https://api.openai.com https://api.themoviedb.org",
+    "font-src 'self'",
+    "frame-src 'none'",
+    "object-src 'none'",
+    "base-uri 'self'",
+  ]
+  response.headers.set('Content-Security-Policy', cspDirectives.join('; '))
 
   // CORS for API routes - restrict to same origin in production
   if (request.nextUrl.pathname.startsWith('/api')) {

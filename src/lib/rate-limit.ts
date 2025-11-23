@@ -1,28 +1,73 @@
-// Simple in-memory rate limiter (use Redis for production)
-const rateLimit = new Map<string, { count: number; resetTime: number }>()
+import { Ratelimit } from '@upstash/ratelimit'
+import { Redis } from '@upstash/redis'
+
+// In-memory fallback rate limiter
+const inMemoryRateLimit = new Map<string, { count: number; resetTime: number }>()
 
 interface RateLimitConfig {
   windowMs: number  // Time window in milliseconds
   max: number       // Max requests per window
 }
 
-export function checkRateLimit(
+// Initialize Redis client if environment variables are configured
+let redis: Redis | null = null
+let rateLimiters: Map<string, Ratelimit> = new Map()
+
+function getRedisClient(): Redis | null {
+  if (redis) return redis
+
+  const url = process.env.UPSTASH_REDIS_REST_URL
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN
+
+  if (url && token) {
+    try {
+      redis = new Redis({ url, token })
+      return redis
+    } catch (error) {
+      console.warn('Failed to initialize Upstash Redis:', error)
+      return null
+    }
+  }
+
+  return null
+}
+
+function getRateLimiter(config: RateLimitConfig): Ratelimit | null {
+  const client = getRedisClient()
+  if (!client) return null
+
+  const configKey = `${config.windowMs}-${config.max}`
+
+  if (!rateLimiters.has(configKey)) {
+    const limiter = new Ratelimit({
+      redis: client,
+      limiter: Ratelimit.slidingWindow(config.max, `${config.windowMs} ms`),
+      analytics: true,
+      prefix: 'moodreel:ratelimit',
+    })
+    rateLimiters.set(configKey, limiter)
+  }
+
+  return rateLimiters.get(configKey)!
+}
+
+// In-memory fallback implementation
+function checkRateLimitInMemory(
   key: string,
   config: RateLimitConfig
 ): { allowed: boolean; remaining: number; resetIn: number } {
   const now = Date.now()
-  const record = rateLimit.get(key)
+  const record = inMemoryRateLimit.get(key)
 
   // Clean up old entries periodically
-  if (rateLimit.size > 10000) {
-    for (const [k, v] of rateLimit) {
-      if (v.resetTime < now) rateLimit.delete(k)
+  if (inMemoryRateLimit.size > 10000) {
+    for (const [k, v] of inMemoryRateLimit) {
+      if (v.resetTime < now) inMemoryRateLimit.delete(k)
     }
   }
 
   if (!record || record.resetTime < now) {
-    // New window
-    rateLimit.set(key, { count: 1, resetTime: now + config.windowMs })
+    inMemoryRateLimit.set(key, { count: 1, resetTime: now + config.windowMs })
     return { allowed: true, remaining: config.max - 1, resetIn: config.windowMs }
   }
 
@@ -42,22 +87,50 @@ export function checkRateLimit(
   }
 }
 
+// Async rate limit check (uses Redis if available, falls back to in-memory)
+export async function checkRateLimit(
+  key: string,
+  config: RateLimitConfig
+): Promise<{ allowed: boolean; remaining: number; resetIn: number }> {
+  const limiter = getRateLimiter(config)
+
+  if (!limiter) {
+    return checkRateLimitInMemory(key, config)
+  }
+
+  try {
+    const result = await limiter.limit(key)
+    return {
+      allowed: result.success,
+      remaining: result.remaining,
+      resetIn: Math.max(0, result.reset - Date.now())
+    }
+  } catch (error) {
+    console.warn('Redis rate limit failed, falling back to in-memory:', error)
+    return checkRateLimitInMemory(key, config)
+  }
+}
+
+// Synchronous version for backward compatibility (in-memory only)
+export function checkRateLimitSync(
+  key: string,
+  config: RateLimitConfig
+): { allowed: boolean; remaining: number; resetIn: number } {
+  return checkRateLimitInMemory(key, config)
+}
+
 // Extract client IP from request headers
 export function getClientIP(headers: Headers): string {
-  // Check various headers in order of trust
   const forwardedFor = headers.get('x-forwarded-for')
   if (forwardedFor) {
-    // Take the first IP (original client)
     return forwardedFor.split(',')[0].trim()
   }
 
-  // Cloudflare
   const cfConnectingIP = headers.get('cf-connecting-ip')
   if (cfConnectingIP) {
     return cfConnectingIP.trim()
   }
 
-  // Vercel
   const xRealIP = headers.get('x-real-ip')
   if (xRealIP) {
     return xRealIP.trim()
