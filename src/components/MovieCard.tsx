@@ -23,7 +23,7 @@ export const MovieCard = memo(function MovieCard({
   const matchPercent = Math.round(similarity * 100)
 
   return (
-    <div className="group relative bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800 hover:border-purple-500/50 transition-all">
+    <div className="group relative bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800 hover:border-purple-500/50 shadow-lg hover:shadow-xl transition-all">
       {/* Poster */}
       <div className="aspect-[2/3] relative">
         {movie.posterUrl ? (

@@ -31,9 +31,9 @@ export function SearchInput({ value, onChange, onSubmit, disabled }: SearchInput
         aria-required="true"
         aria-describedby="search-help"
         className={cn(
-          "w-full px-6 py-4 pl-14 rounded-2xl",
+          "w-full px-6 py-4 pl-14 rounded-xl shadow-lg",
           "bg-zinc-900 border border-zinc-700",
-          "text-white placeholder:text-zinc-500",
+          "text-white placeholder:text-zinc-400",
           "focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           "transition-all"
@@ -50,10 +50,11 @@ export function SearchInput({ value, onChange, onSubmit, disabled }: SearchInput
         className={cn(
           "absolute right-3 top-1/2 -translate-y-1/2",
           "px-4 py-2 rounded-xl",
-          "bg-purple-600 hover:bg-purple-500",
+          "bg-purple-600 hover:bg-purple-500 active:scale-95",
           "text-white font-medium text-sm",
+          "focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-zinc-900",
           "disabled:opacity-50 disabled:cursor-not-allowed",
-          "transition-colors"
+          "transition-all"
         )}
       >
         Find vibes
