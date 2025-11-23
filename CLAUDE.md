@@ -10,6 +10,7 @@ npm run build        # Production build
 npm run lint         # Run ESLint
 npm run test         # Run Vitest in watch mode
 npm run test:run     # Run Vitest once (CI mode)
+npx vitest run src/lib/validation.test.ts  # Run single test file
 npm run seed         # Seed database with 20 sample movies
 npm run db:migrate   # Push Supabase schema changes
 ```
