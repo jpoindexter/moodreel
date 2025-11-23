@@ -69,8 +69,18 @@ Be specific and evocative. Focus on the feeling and aesthetic, not plot summary.
   }
 
   try {
-    return JSON.parse(content)
-  } catch {
+    const parsed = JSON.parse(content)
+
+    // Validate required structure
+    if (!parsed.vibeProfile || !parsed.vibeSummary) {
+      throw new Error('Invalid response structure from OpenAI')
+    }
+
+    return parsed
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Invalid response')) {
+      throw error
+    }
     throw new Error('Invalid JSON response from OpenAI')
   }
 }

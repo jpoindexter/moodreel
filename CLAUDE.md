@@ -8,6 +8,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev          # Start development server on localhost:3000
 npm run build        # Production build
 npm run lint         # Run ESLint
+npm run test         # Run Vitest in watch mode
+npm run test:run     # Run Vitest once (CI mode)
 npm run seed         # Seed database with 20 sample movies
 npm run db:migrate   # Push Supabase schema changes
 ```
@@ -23,10 +25,11 @@ MoodReel is a vibe-based movie recommender using vector embeddings for similarit
 
 ### Key Patterns
 
-- **Rate limiting**: In-memory Map-based limiter in `src/lib/rate-limit.ts` (10/min analyze, 30/min recommend)
+- **Rate limiting**: Upstash Redis sliding window limiter with in-memory fallback in `src/lib/rate-limit.ts` (10/min analyze, 30/min recommend)
 - **Graceful degradation**: `Promise.allSettled` for batch LLM calls with fallback explanations
 - **Input validation**: All API inputs validated via `src/lib/validation.ts` before processing
-- **Security headers**: Middleware at `src/middleware.ts` adds CORS, CSP, HSTS
+- **Security headers**: Middleware at `src/middleware.ts` adds CORS, CSP (stricter in production), HSTS
+- **Error monitoring**: Sentry integration at `src/instrumentation.ts` (enabled in production only)
 
 ### Database
 
@@ -50,6 +53,10 @@ Required in `.env`:
 
 Production:
 - `ALLOWED_ORIGINS` - Comma-separated CORS origins
+- `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` - Redis rate limiting
+
+Optional (Sentry monitoring):
+- `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`
 
 ## Type Definitions
 
@@ -57,3 +64,11 @@ Core types in `src/lib/types.ts`:
 - `VibeProfile` - 8 vibe dimensions (mood, visualStyle, themes, etc.)
 - `Movie` - Full movie record with embedding
 - `Recommendation` - Movie with similarity score and explanation
+
+## Testing
+
+Tests use Vitest with React Testing Library. Run with `npm test`.
+
+Test files:
+- `src/lib/validation.test.ts` - Input validation tests
+- `src/lib/rate-limit.test.ts` - Rate limiting tests
