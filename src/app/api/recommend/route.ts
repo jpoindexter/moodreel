@@ -84,8 +84,8 @@ export async function POST(req: NextRequest) {
       .filter((m: { id: string }) => m.id !== movieId)
       .slice(0, safeLimit)
 
-    // Generate explanations for each recommendation
-    const recommendations: Recommendation[] = await Promise.all(
+    // Generate explanations for each recommendation with graceful degradation
+    const explanationResults = await Promise.allSettled(
       filteredMovies.map(async (m: Movie & { similarity: number }) => {
         const explanation = await generateVibeExplanation(
           sourceMovie.title,
@@ -93,6 +93,17 @@ export async function POST(req: NextRequest) {
           sourceMovie.vibeSummary,
           m.vibeSummary
         )
+        return { movie: m, explanation }
+      })
+    )
+
+    // Build recommendations, using fallback for failed explanations
+    const recommendations: Recommendation[] = explanationResults
+      .map((result, index) => {
+        const m = filteredMovies[index]
+        const explanation = result.status === 'fulfilled'
+          ? result.value.explanation
+          : `Similar vibe to ${sourceMovie.title}` // Fallback explanation
 
         return {
           movie: {
@@ -103,7 +114,7 @@ export async function POST(req: NextRequest) {
             overview: m.overview,
             vibeProfile: m.vibeProfile,
             vibeSummary: m.vibeSummary,
-            embedding: m.embedding,
+            embedding: [], // Don't send embeddings to client
             tmdbId: m.tmdbId,
             imdbId: m.imdbId,
           },
@@ -111,7 +122,6 @@ export async function POST(req: NextRequest) {
           vibeExplanation: explanation,
         }
       })
-    )
 
     return NextResponse.json({ recommendations })
   } catch (error) {

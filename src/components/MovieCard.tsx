@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { Heart } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Movie } from '@/lib/types'
@@ -12,7 +13,7 @@ interface MovieCardProps {
   onToggleFavorite: () => void
 }
 
-export function MovieCard({
+export const MovieCard = memo(function MovieCard({
   movie,
   explanation,
   similarity,
@@ -84,4 +85,4 @@ export function MovieCard({
       </div>
     </div>
   )
-}
+})
