@@ -85,6 +85,7 @@ Design tokens are defined in `tailwind.config.ts`. Always use these instead of h
 - `brand-primary`, `brand-primary-hover`, `brand-accent`
 - `surface`, `surface-elevated`, `surface-border`
 - `content-primary`, `content-secondary`, `content-muted`
+- `status-error`, `status-error-bg`, `status-error-border`, `status-success`, `status-success-bg`
 
 **Shadows**: `shadow-card`, `shadow-card-hover`
 
@@ -94,7 +95,7 @@ Design tokens are defined in `tailwind.config.ts`. Always use these instead of h
 
 Located in `src/components/ui/`:
 - **Button** - variants: `primary`, `secondary`, `ghost` | sizes: `sm`, `md`, `lg`
-- **Card** - variants: `default`, `elevated`, `interactive`
+- **Card** - variants: `default`, `elevated`, `interactive` | also exports `CardContent`
 - **Badge** - variants: `default`, `purple`, `pink`, `success`
 
 ```tsx
@@ -102,7 +103,7 @@ import { Button, Card, Badge } from '@/components/ui'
 ```
 
 ### Typography
-- **Font**: Inter from Google Fonts (`next/font/google`)
+- **Font**: System font stack with Inter as primary (defined in `tailwind.config.ts`)
 - Consistent border radius (`rounded-xl`)
 
 ### Domain Components
