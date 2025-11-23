@@ -43,12 +43,16 @@ export async function searchMovie(title: string, year?: number): Promise<TMDBMov
 }
 
 export async function getMovieDetails(tmdbId: number): Promise<TMDBMovie | null> {
+  const params = new URLSearchParams({
+    api_key: TMDB_API_KEY!,
+  })
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 10000) // 10s timeout
 
   try {
     const response = await fetch(
-      `${TMDB_BASE_URL}/movie/${tmdbId}?api_key=${TMDB_API_KEY}`,
+      `${TMDB_BASE_URL}/movie/${tmdbId}?${params}`,
       { signal: controller.signal }
     )
     clearTimeout(timeoutId)
