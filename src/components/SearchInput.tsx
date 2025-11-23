@@ -28,6 +28,7 @@ export function SearchInput({ value, onChange, onSubmit, disabled }: SearchInput
         onChange={(e) => onChange(e.target.value)}
         placeholder="Enter a movie title..."
         disabled={disabled}
+        aria-required="true"
         aria-describedby="search-help"
         className={cn(
           "w-full px-6 py-4 pl-14 rounded-2xl",

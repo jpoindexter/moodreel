@@ -154,7 +154,7 @@ export default function Home() {
                 <div className="flex-1">
                   <h3 className="text-2xl font-bold mb-1">
                     {sourceMovie.title}
-                    <span className="text-zinc-500 font-normal ml-2">
+                    <span className="text-zinc-400 font-normal ml-2">
                       ({sourceMovie.year})
                     </span>
                   </h3>
@@ -208,7 +208,7 @@ export default function Home() {
             <h3 className="text-lg font-medium text-zinc-300 mb-2">
               No similar vibes found
             </h3>
-            <p className="text-zinc-500 mb-4">
+            <p className="text-zinc-400 mb-4">
               We couldn&apos;t find movies with matching vibes in our database yet.
             </p>
             <button

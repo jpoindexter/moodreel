@@ -31,9 +31,10 @@ export const MovieCard = memo(function MovieCard({
             src={movie.posterUrl}
             alt={`${movie.title} (${movie.year}) poster`}
             className="w-full h-full object-cover"
+            loading="lazy"
           />
         ) : (
-          <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-600">
+          <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-500">
             No poster
           </div>
         )}
@@ -72,7 +73,7 @@ export const MovieCard = memo(function MovieCard({
         <h3 className="font-semibold text-white truncate" title={movie.title}>
           {movie.title}
         </h3>
-        <p className="text-zinc-500 text-sm mb-2">{movie.year}</p>
+        <p className="text-zinc-400 text-sm mb-2">{movie.year}</p>
 
         {/* Vibe summary */}
         <p className="text-zinc-400 text-sm italic mb-3 line-clamp-2">
@@ -80,7 +81,7 @@ export const MovieCard = memo(function MovieCard({
         </p>
 
         {/* Why recommended */}
-        <div className="text-xs text-purple-300/80 line-clamp-3">
+        <div className="text-xs text-purple-300 line-clamp-3">
           {explanation}
         </div>
       </div>

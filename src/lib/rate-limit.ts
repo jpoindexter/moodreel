@@ -139,8 +139,9 @@ export function getClientIP(headers: Headers): string {
   return 'anonymous'
 }
 
-// Pre-configured limiters
+// Re-export from constants for single source of truth
+export { API_CONFIG } from './constants'
 export const RATE_LIMITS = {
   analyze: { windowMs: 60000, max: 10 },   // 10 per minute
   recommend: { windowMs: 60000, max: 30 }, // 30 per minute
-}
+} as const

@@ -36,8 +36,9 @@ export async function searchMovie(title: string, year?: number): Promise<TMDBMov
     }
 
     return null
-  } catch {
+  } catch (error) {
     clearTimeout(timeoutId)
+    console.error('TMDB search error:', error)
     return null
   }
 }
@@ -59,8 +60,9 @@ export async function getMovieDetails(tmdbId: number): Promise<TMDBMovie | null>
 
     if (!response.ok) return null
     return response.json()
-  } catch {
+  } catch (error) {
     clearTimeout(timeoutId)
+    console.error('TMDB getMovieDetails error:', error)
     return null
   }
 }
