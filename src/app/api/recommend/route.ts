@@ -1,18 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
 import { generateVibeExplanation } from '@/lib/openai'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import { validateUUID, validateLimit } from '@/lib/validation'
 import type { Recommendation, Movie } from '@/lib/types'
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous'
+    const rateLimitResult = checkRateLimit(`recommend:${ip}`, RATE_LIMITS.recommend)
+
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait before trying again.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil(rateLimitResult.resetIn / 1000))
+          }
+        }
+      )
+    }
+
     const { movieId, limit = 8 } = await req.json()
 
-    if (!movieId) {
+    // Validate inputs
+    const idValidation = validateUUID(movieId)
+    if (!idValidation.valid) {
       return NextResponse.json(
-        { error: 'Movie ID is required' },
+        { error: idValidation.error },
         { status: 400 }
       )
     }
+
+    const limitValidation = validateLimit(limit)
+    if (!limitValidation.valid) {
+      return NextResponse.json(
+        { error: limitValidation.error },
+        { status: 400 }
+      )
+    }
+
+    const safeLimit = Math.min(Math.max(Number(limit) || 8, 1), 50)
 
     const supabase = createServerClient()
 
@@ -37,7 +67,7 @@ export async function POST(req: NextRequest) {
       {
         query_embedding: sourceMovie.embedding,
         match_threshold: 0.5,
-        match_count: limit + 1, // +1 to exclude the source movie
+        match_count: safeLimit + 1, // +1 to exclude the source movie
       }
     )
 
@@ -52,7 +82,7 @@ export async function POST(req: NextRequest) {
     // Filter out the source movie and build recommendations
     const filteredMovies = (similarMovies || [])
       .filter((m: { id: string }) => m.id !== movieId)
-      .slice(0, limit)
+      .slice(0, safeLimit)
 
     // Generate explanations for each recommendation
     const recommendations: Recommendation[] = await Promise.all(

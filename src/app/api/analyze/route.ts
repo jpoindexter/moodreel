@@ -2,18 +2,40 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
 import { analyzeMovieVibe, generateEmbedding } from '@/lib/openai'
 import { searchMovie, getPosterUrl } from '@/lib/tmdb'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import { validateTitle, sanitizeForPrompt } from '@/lib/validation'
 import type { Movie, VibeProfile } from '@/lib/types'
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous'
+    const rateLimitResult = checkRateLimit(`analyze:${ip}`, RATE_LIMITS.analyze)
+
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait before trying again.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil(rateLimitResult.resetIn / 1000))
+          }
+        }
+      )
+    }
+
     const { title, year } = await req.json()
 
-    if (!title) {
+    // Validate input
+    const titleValidation = validateTitle(title)
+    if (!titleValidation.valid) {
       return NextResponse.json(
-        { error: 'Title is required' },
+        { error: titleValidation.error },
         { status: 400 }
       )
     }
+
+    const sanitizedTitle = sanitizeForPrompt(title)
 
     const supabase = createServerClient()
 
@@ -21,7 +43,7 @@ export async function POST(req: NextRequest) {
     const { data: existing } = await supabase
       .from('movies')
       .select('*')
-      .ilike('title', title)
+      .ilike('title', sanitizedTitle)
       .limit(1)
       .single()
 
@@ -30,7 +52,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Search TMDB for movie data
-    const tmdbMovie = await searchMovie(title, year)
+    const tmdbMovie = await searchMovie(sanitizedTitle, year)
 
     if (!tmdbMovie) {
       return NextResponse.json(

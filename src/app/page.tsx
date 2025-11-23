@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, Heart, Sparkles, Film } from 'lucide-react'
+import { Search, Heart, Sparkles, Film, AlertCircle, RefreshCw } from 'lucide-react'
 import { MovieCard } from '@/components/MovieCard'
 import { SearchInput } from '@/components/SearchInput'
 import { VibeLoader } from '@/components/VibeLoader'
+import { MoodSelector } from '@/components/MoodSelector'
 import type { Recommendation, Movie } from '@/lib/types'
 
 export default function Home() {
@@ -32,7 +33,13 @@ export default function Home() {
       })
 
       if (!analyzeRes.ok) {
-        throw new Error('Failed to analyze movie')
+        const data = await analyzeRes.json().catch(() => ({}))
+        if (analyzeRes.status === 404) {
+          throw new Error(`Movie "${title}" not found. Try checking the spelling or adding the year.`)
+        } else if (analyzeRes.status === 429) {
+          throw new Error('Too many requests. Please wait a moment and try again.')
+        }
+        throw new Error(data.error || 'Failed to analyze movie')
       }
 
       const { movie } = await analyzeRes.json()
@@ -46,7 +53,8 @@ export default function Home() {
       })
 
       if (!recommendRes.ok) {
-        throw new Error('Failed to get recommendations')
+        const data = await recommendRes.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to get recommendations')
       }
 
       const { recommendations: recs } = await recommendRes.json()
@@ -102,8 +110,20 @@ export default function Home() {
 
         {/* Error State */}
         {error && (
-          <div className="text-center text-red-400 mb-8">
-            {error}
+          <div className="max-w-xl mx-auto mb-8" role="alert" aria-live="assertive">
+            <div className="bg-red-900/20 border border-red-800 rounded-xl p-4 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-red-300">{error}</p>
+                <button
+                  onClick={() => { setError(null); setQuery('') }}
+                  className="mt-2 text-sm text-red-400 hover:text-red-300 flex items-center gap-1"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Try again
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -173,11 +193,15 @@ export default function Home() {
           </div>
         )}
 
-        {/* Empty State */}
+        {/* Empty State with Mood Selector */}
         {!loading && !sourceMovie && !error && (
-          <div className="text-center text-zinc-500 mt-12">
-            <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Enter a movie title to discover vibe matches</p>
+          <div className="mt-12">
+            <div className="text-center mb-8">
+              <p className="text-zinc-400 mb-2">Or pick a mood to get started</p>
+            </div>
+            <div className="max-w-2xl mx-auto">
+              <MoodSelector onSelectMood={handleSearch} />
+            </div>
           </div>
         )}
       </div>
