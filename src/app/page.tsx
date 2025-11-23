@@ -6,6 +6,7 @@ import { MovieCard } from '@/components/MovieCard'
 import { SearchInput } from '@/components/SearchInput'
 import { VibeLoader } from '@/components/VibeLoader'
 import { MoodSelector } from '@/components/MoodSelector'
+import { Badge } from '@/components/ui'
 import type { Recommendation, Movie } from '@/lib/types'
 
 export default function Home() {
@@ -95,7 +96,7 @@ export default function Home() {
               MoodReel
             </h1>
           </div>
-          <p className="text-zinc-400 text-lg max-w-xl mx-auto">
+          <p className="text-content-secondary text-lg max-w-xl mx-auto">
             Find movies that match your vibe, not just your genre.
             Enter a title and discover aesthetically similar films.
           </p>
@@ -140,7 +141,7 @@ export default function Home() {
               <Sparkles className="w-5 h-5 text-purple-400" aria-hidden="true" />
               Analyzing vibes for
             </h2>
-            <div className="bg-zinc-900/50 rounded-xl p-6 border border-zinc-800">
+            <div className="bg-zinc-900/50 rounded-xl p-6 border border-zinc-800 shadow-card">
               <div className="flex gap-6">
                 {sourceMovie.posterUrl && (
                   <img
@@ -163,14 +164,10 @@ export default function Home() {
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {sourceMovie.vibeProfile.mood.map(m => (
-                      <span key={m} className="px-3 py-1 bg-purple-900/40 rounded-full text-sm text-purple-200">
-                        {m}
-                      </span>
+                      <Badge key={m} variant="purple">{m}</Badge>
                     ))}
                     {sourceMovie.vibeProfile.themes.slice(0, 3).map(t => (
-                      <span key={t} className="px-3 py-1 bg-pink-900/40 rounded-full text-sm text-pink-200">
-                        {t}
-                      </span>
+                      <Badge key={t} variant="pink">{t}</Badge>
                     ))}
                   </div>
                 </div>
