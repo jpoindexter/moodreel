@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Heart, Sparkles, Film, AlertCircle, RefreshCw, SearchX } from 'lucide-react'
 import { MovieCard } from '@/components/MovieCard'
 import { SearchInput } from '@/components/SearchInput'
@@ -16,7 +16,7 @@ export default function Home() {
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
 
-  const handleSearch = async (title: string) => {
+  const handleSearch = useCallback(async (title: string) => {
     if (!title.trim()) return
 
     setLoading(true)
@@ -64,9 +64,9 @@ export default function Home() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const toggleFavorite = async (movieId: string) => {
+  const toggleFavorite = useCallback((movieId: string) => {
     setFavorites(prev => {
       const next = new Set(prev)
       if (next.has(movieId)) {
@@ -76,7 +76,7 @@ export default function Home() {
       }
       return next
     })
-  }
+  }, [])
 
   return (
     <main className="min-h-screen px-4 py-12 md:px-8 lg:px-16">

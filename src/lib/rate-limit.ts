@@ -42,6 +42,30 @@ export function checkRateLimit(
   }
 }
 
+// Extract client IP from request headers
+export function getClientIP(headers: Headers): string {
+  // Check various headers in order of trust
+  const forwardedFor = headers.get('x-forwarded-for')
+  if (forwardedFor) {
+    // Take the first IP (original client)
+    return forwardedFor.split(',')[0].trim()
+  }
+
+  // Cloudflare
+  const cfConnectingIP = headers.get('cf-connecting-ip')
+  if (cfConnectingIP) {
+    return cfConnectingIP.trim()
+  }
+
+  // Vercel
+  const xRealIP = headers.get('x-real-ip')
+  if (xRealIP) {
+    return xRealIP.trim()
+  }
+
+  return 'anonymous'
+}
+
 // Pre-configured limiters
 export const RATE_LIMITS = {
   analyze: { windowMs: 60000, max: 10 },   // 10 per minute

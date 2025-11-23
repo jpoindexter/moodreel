@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
 import { generateVibeExplanation } from '@/lib/openai'
-import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rate-limit'
 import { validateUUID, validateLimit } from '@/lib/validation'
 import type { Recommendation, Movie } from '@/lib/types'
 
 export async function POST(req: NextRequest) {
   try {
     // Rate limiting
-    const ip = req.headers.get('x-forwarded-for') || 'anonymous'
+    const ip = getClientIP(req.headers)
     const rateLimitResult = checkRateLimit(`recommend:${ip}`, RATE_LIMITS.recommend)
 
     if (!rateLimitResult.allowed) {

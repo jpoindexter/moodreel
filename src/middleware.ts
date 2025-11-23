@@ -9,16 +9,42 @@ export function middleware(request: NextRequest) {
   response.headers.set('X-Frame-Options', 'DENY')
   response.headers.set('X-XSS-Protection', '1; mode=block')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  response.headers.set('X-Permitted-Cross-Domain-Policies', 'none')
   response.headers.set(
     'Permissions-Policy',
     'camera=(), microphone=(), geolocation=()'
   )
 
-  // CORS for API routes
+  // HSTS - enforce HTTPS
+  response.headers.set(
+    'Strict-Transport-Security',
+    'max-age=31536000; includeSubDomains'
+  )
+
+  // Content Security Policy
+  response.headers.set(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' https://image.tmdb.org https://m.media-amazon.com data:; connect-src 'self' https://api.openai.com https://api.themoviedb.org; font-src 'self'"
+  )
+
+  // CORS for API routes - restrict to same origin in production
   if (request.nextUrl.pathname.startsWith('/api')) {
-    response.headers.set('Access-Control-Allow-Origin', '*')
+    const origin = request.headers.get('origin')
+    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+    ]
+
+    if (origin && allowedOrigins.includes(origin)) {
+      response.headers.set('Access-Control-Allow-Origin', origin)
+    } else if (!origin) {
+      // Same-origin requests don't have Origin header
+      response.headers.set('Access-Control-Allow-Origin', allowedOrigins[0])
+    }
+
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
     response.headers.set('Access-Control-Allow-Headers', 'Content-Type')
+    response.headers.set('Access-Control-Max-Age', '86400')
   }
 
   return response
