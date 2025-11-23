@@ -6,7 +6,7 @@ import { MovieCard } from '@/components/MovieCard'
 import { SearchInput } from '@/components/SearchInput'
 import { VibeLoader } from '@/components/VibeLoader'
 import { MoodSelector } from '@/components/MoodSelector'
-import { Badge } from '@/components/ui'
+import { Badge, Button } from '@/components/ui'
 import type { Recommendation, Movie } from '@/lib/types'
 
 export default function Home() {
@@ -96,7 +96,7 @@ export default function Home() {
               MoodReel
             </h1>
           </div>
-          <p className="text-content-secondary text-lg max-w-xl mx-auto">
+          <p className="text-zinc-400 text-lg max-w-xl mx-auto">
             Find movies that match your vibe, not just your genre.
             Enter a title and discover aesthetically similar films.
           </p>
@@ -122,13 +122,15 @@ export default function Home() {
               <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
               <div className="flex-1">
                 <p className="text-red-300">{error}</p>
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => { setError(null); setQuery('') }}
-                  className="mt-2 text-sm text-red-400 hover:text-red-300 flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-red-500 rounded"
+                  className="mt-2 text-red-400 hover:text-red-300"
                 >
                   <RefreshCw className="w-3 h-3" aria-hidden="true" />
                   Try again
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -137,7 +139,7 @@ export default function Home() {
         {/* Source Movie */}
         {sourceMovie && !loading && (
           <div className="mb-12">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-purple-400" aria-hidden="true" />
               Analyzing vibes for
             </h2>
@@ -153,7 +155,7 @@ export default function Home() {
                   />
                 )}
                 <div className="flex-1">
-                  <h3 className="text-2xl font-bold mb-1">
+                  <h3 className="text-xl font-semibold mb-1">
                     {sourceMovie.title}
                     <span className="text-zinc-400 font-normal ml-2">
                       ({sourceMovie.year})
@@ -179,7 +181,7 @@ export default function Home() {
         {/* Recommendations Grid */}
         {recommendations.length > 0 && (
           <div>
-            <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
+            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
               <Heart className="w-5 h-5 text-pink-400" aria-hidden="true" />
               Movies with similar vibes
             </h2>
@@ -208,12 +210,13 @@ export default function Home() {
             <p className="text-zinc-400 mb-4">
               We couldn&apos;t find movies with matching vibes in our database yet.
             </p>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => { setSourceMovie(null); setQuery('') }}
-              className="text-purple-400 hover:text-purple-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 rounded"
             >
               Try another movie
-            </button>
+            </Button>
           </div>
         )}
 

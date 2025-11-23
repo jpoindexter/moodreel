@@ -3,6 +3,7 @@
 import { memo } from 'react'
 import { Heart } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Card, CardContent } from '@/components/ui'
 import type { Movie } from '@/lib/types'
 
 interface MovieCardProps {
@@ -23,7 +24,7 @@ export const MovieCard = memo(function MovieCard({
   const matchPercent = Math.round(similarity * 100)
 
   return (
-    <div className="group relative bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800 hover:border-purple-500/50 shadow-lg hover:shadow-xl transition-all">
+    <Card variant="interactive" className="group relative overflow-hidden">
       {/* Poster */}
       <div className="aspect-[2/3] relative">
         {movie.posterUrl ? (
@@ -69,7 +70,7 @@ export const MovieCard = memo(function MovieCard({
       </div>
 
       {/* Info */}
-      <div className="p-4">
+      <CardContent>
         <h3 className="font-semibold text-white truncate" title={movie.title}>
           {movie.title}
         </h3>
@@ -84,7 +85,7 @@ export const MovieCard = memo(function MovieCard({
         <div className="text-xs text-purple-300 line-clamp-3">
           {explanation}
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
 })

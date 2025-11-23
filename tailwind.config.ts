@@ -8,6 +8,20 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: [
+          'Inter',
+          'ui-sans-serif',
+          'system-ui',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'Roboto',
+          'Helvetica Neue',
+          'Arial',
+          'sans-serif',
+        ],
+      },
       colors: {
         background: 'var(--background)',
         foreground: 'var(--foreground)',
@@ -28,6 +42,14 @@ const config: Config = {
           primary: '#ffffff',
           secondary: '#a1a1aa', // zinc-400
           muted: '#71717a', // zinc-500
+        },
+        // Status colors
+        status: {
+          error: '#f87171', // red-400
+          'error-bg': 'rgb(127 29 29 / 0.2)', // red-900/20
+          'error-border': '#991b1b', // red-800
+          success: '#4ade80', // green-400
+          'success-bg': 'rgb(20 83 45 / 0.4)', // green-900/40
         },
       },
       borderRadius: {

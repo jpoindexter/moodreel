@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { AlertCircle, RefreshCw } from 'lucide-react'
+import { Button } from '@/components/ui'
 
 export default function Error({
   error,
@@ -24,13 +25,10 @@ export default function Error({
         <p className="text-zinc-400 mb-6">
           An unexpected error occurred. Please try again.
         </p>
-        <button
-          onClick={reset}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl text-white font-medium transition-colors"
-        >
-          <RefreshCw className="w-4 h-4" />
+        <Button size="lg" onClick={reset}>
+          <RefreshCw className="w-4 h-4" aria-hidden="true" />
           Try again
-        </button>
+        </Button>
       </div>
     </div>
   )
