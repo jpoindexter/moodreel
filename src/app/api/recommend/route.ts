@@ -3,6 +3,7 @@ import { createServerClient } from '@/lib/supabase'
 import { generateVibeExplanation } from '@/lib/openai'
 import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rate-limit'
 import { validateUUID, validateLimit } from '@/lib/validation'
+import { API_CONFIG } from '@/lib/constants'
 import type { Recommendation, Movie } from '@/lib/types'
 
 export async function POST(req: NextRequest) {
@@ -52,7 +53,8 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const safeLimit = Math.min(Math.max(Number(limit) || 8, 1), 50)
+    const { min, default: defaultLimit, max } = API_CONFIG.RECOMMENDATION_LIMITS
+    const safeLimit = Math.min(Math.max(Number(limit) || defaultLimit, min), max)
 
     const supabase = createServerClient()
 
@@ -84,7 +86,7 @@ export async function POST(req: NextRequest) {
       'match_movies',
       {
         query_embedding: sourceMovie.embedding,
-        match_threshold: 0.5,
+        match_threshold: API_CONFIG.SIMILARITY_THRESHOLD,
         match_count: safeLimit + 1, // +1 to exclude the source movie
       }
     )

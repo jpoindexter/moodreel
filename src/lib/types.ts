@@ -29,11 +29,6 @@ export interface Recommendation {
   vibeExplanation: string  // LLM-generated "why this matches"
 }
 
-export interface SearchResult {
-  query: Movie
-  recommendations: Recommendation[]
-}
-
 export interface FavoriteMovie {
   id: string
   movieId: string

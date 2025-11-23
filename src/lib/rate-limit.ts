@@ -111,14 +111,6 @@ export async function checkRateLimit(
   }
 }
 
-// Synchronous version for backward compatibility (in-memory only)
-export function checkRateLimitSync(
-  key: string,
-  config: RateLimitConfig
-): { allowed: boolean; remaining: number; resetIn: number } {
-  return checkRateLimitInMemory(key, config)
-}
-
 // Extract client IP from request headers
 export function getClientIP(headers: Headers): string {
   const forwardedFor = headers.get('x-forwarded-for')

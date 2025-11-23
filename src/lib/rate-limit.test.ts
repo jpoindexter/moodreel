@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { checkRateLimitSync, getClientIP, RATE_LIMITS } from './rate-limit'
+import { checkRateLimit, getClientIP, RATE_LIMITS } from './rate-limit'
 
-describe('checkRateLimitSync', () => {
+describe('checkRateLimit', () => {
   beforeEach(() => {
     vi.useFakeTimers()
   })
@@ -10,56 +10,56 @@ describe('checkRateLimitSync', () => {
     vi.useRealTimers()
   })
 
-  it('should allow first request', () => {
-    const result = checkRateLimitSync('test-key-1', { windowMs: 60000, max: 10 })
+  it('should allow first request', async () => {
+    const result = await checkRateLimit('test-key-1', { windowMs: 60000, max: 10 })
     expect(result.allowed).toBe(true)
     expect(result.remaining).toBe(9)
   })
 
-  it('should track multiple requests within window', () => {
+  it('should track multiple requests within window', async () => {
     const config = { windowMs: 60000, max: 5 }
     const key = 'test-key-2'
 
-    const result1 = checkRateLimitSync(key, config)
+    const result1 = await checkRateLimit(key, config)
     expect(result1.remaining).toBe(4)
 
-    const result2 = checkRateLimitSync(key, config)
+    const result2 = await checkRateLimit(key, config)
     expect(result2.remaining).toBe(3)
   })
 
-  it('should block requests when limit is exceeded', () => {
+  it('should block requests when limit is exceeded', async () => {
     const config = { windowMs: 60000, max: 2 }
     const key = 'test-key-3'
 
-    checkRateLimitSync(key, config)
-    checkRateLimitSync(key, config)
-    const result = checkRateLimitSync(key, config)
+    await checkRateLimit(key, config)
+    await checkRateLimit(key, config)
+    const result = await checkRateLimit(key, config)
 
     expect(result.allowed).toBe(false)
     expect(result.remaining).toBe(0)
   })
 
-  it('should reset after window expires', () => {
+  it('should reset after window expires', async () => {
     const config = { windowMs: 60000, max: 2 }
     const key = 'test-key-4'
 
-    checkRateLimitSync(key, config)
-    checkRateLimitSync(key, config)
+    await checkRateLimit(key, config)
+    await checkRateLimit(key, config)
 
-    let result = checkRateLimitSync(key, config)
+    let result = await checkRateLimit(key, config)
     expect(result.allowed).toBe(false)
 
     vi.advanceTimersByTime(60001)
 
-    result = checkRateLimitSync(key, config)
+    result = await checkRateLimit(key, config)
     expect(result.allowed).toBe(true)
   })
 
-  it('should track different keys independently', () => {
+  it('should track different keys independently', async () => {
     const config = { windowMs: 60000, max: 1 }
 
-    const result1 = checkRateLimitSync('user-1', config)
-    const result2 = checkRateLimitSync('user-2', config)
+    const result1 = await checkRateLimit('user-1', config)
+    const result2 = await checkRateLimit('user-2', config)
 
     expect(result1.allowed).toBe(true)
     expect(result2.allowed).toBe(true)
