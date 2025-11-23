@@ -77,27 +77,39 @@ Test files:
 
 ## Design System
 
+Design tokens are defined in `tailwind.config.ts`. Always use these instead of hardcoded values.
+
+### Design Tokens
+
+**Colors** (use semantic names):
+- `brand-primary`, `brand-primary-hover`, `brand-accent`
+- `surface`, `surface-elevated`, `surface-border`
+- `content-primary`, `content-secondary`, `content-muted`
+
+**Shadows**: `shadow-card`, `shadow-card-hover`
+
+**Animations**: `animate-fade-in`
+
+### Reusable UI Components
+
+Located in `src/components/ui/`:
+- **Button** - variants: `primary`, `secondary`, `ghost` | sizes: `sm`, `md`, `lg`
+- **Card** - variants: `default`, `elevated`, `interactive`
+- **Badge** - variants: `default`, `purple`, `pink`, `success`
+
+```tsx
+import { Button, Card, Badge } from '@/components/ui'
+```
+
 ### Typography
 - **Font**: Inter from Google Fonts (`next/font/google`)
-- Consistent use of Tailwind typography classes
+- Consistent border radius (`rounded-xl`)
 
-### Colors
-- Primary: Purple (`purple-500`, `purple-600`)
-- Accent: Pink (`pink-500`)
-- Neutrals: Zinc scale (`zinc-400` for text, `zinc-800` for borders, `zinc-900` for backgrounds)
-
-### Components
+### Domain Components
 - `MovieCard` - Displays movie with poster, match %, vibe summary
 - `SearchInput` - Search form with validation
 - `MoodSelector` - Grid of mood buttons with diverse international film examples
 - `VibeLoader` - Loading state with spinner
-
-### Visual Polish
-- Box shadows on cards and inputs (`shadow-lg`, `shadow-md`)
-- Consistent border radius (`rounded-xl`)
-- Focus rings with offset for accessibility
-- Active states with scale transform (`active:scale-95`)
-- Custom fade-in animation in `globals.css`
 
 ## Accessibility
 
