@@ -7,6 +7,7 @@ export function VibeLoader() {
       role="status"
       aria-live="polite"
       aria-busy="true"
+      aria-label="Analyzing movie vibes, please wait"
     >
       <div className="relative">
         <div

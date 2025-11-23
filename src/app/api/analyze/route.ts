@@ -125,7 +125,15 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    return NextResponse.json({ movie: newMovie })
+    return NextResponse.json(
+      { movie: newMovie },
+      {
+        headers: {
+          'Cache-Control': 'public, max-age=86400',
+          'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+        }
+      }
+    )
   } catch (error) {
     console.error('Analysis error:', error)
     return NextResponse.json(

@@ -133,7 +133,15 @@ export async function POST(req: NextRequest) {
         }
       })
 
-    return NextResponse.json({ recommendations })
+    return NextResponse.json(
+      { recommendations },
+      {
+        headers: {
+          'Cache-Control': 'public, max-age=3600',
+          'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+        }
+      }
+    )
   } catch (error) {
     console.error('Recommendation error:', error)
     return NextResponse.json(

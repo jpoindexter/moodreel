@@ -15,9 +15,9 @@ export default function Error({
   }, [error])
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center px-4" role="alert" aria-live="assertive">
       <div className="max-w-md w-full text-center">
-        <AlertCircle className="w-16 h-16 mx-auto mb-6 text-red-400" />
+        <AlertCircle className="w-16 h-16 mx-auto mb-6 text-red-400" aria-hidden="true" />
         <h2 className="text-2xl font-bold text-white mb-2">
           Something went wrong
         </h2>

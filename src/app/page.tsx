@@ -117,7 +117,7 @@ export default function Home() {
                 <p className="text-red-300">{error}</p>
                 <button
                   onClick={() => { setError(null); setQuery('') }}
-                  className="mt-2 text-sm text-red-400 hover:text-red-300 flex items-center gap-1"
+                  className="mt-2 text-sm text-red-400 hover:text-red-300 flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-red-500 rounded"
                 >
                   <RefreshCw className="w-3 h-3" />
                   Try again
@@ -139,8 +139,10 @@ export default function Home() {
                 {sourceMovie.posterUrl && (
                   <img
                     src={sourceMovie.posterUrl}
-                    alt={sourceMovie.title}
+                    alt={`${sourceMovie.title} poster`}
                     className="w-32 h-48 object-cover rounded-lg"
+                    loading="lazy"
+                    onError={(e) => { e.currentTarget.style.display = 'none' }}
                   />
                 )}
                 <div className="flex-1">
@@ -205,7 +207,7 @@ export default function Home() {
             </p>
             <button
               onClick={() => { setSourceMovie(null); setQuery('') }}
-              className="text-purple-400 hover:text-purple-300 text-sm"
+              className="text-purple-400 hover:text-purple-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 rounded"
             >
               Try another movie
             </button>

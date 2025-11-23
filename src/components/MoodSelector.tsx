@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { cn } from '@/lib/utils'
 
 interface MoodSelectorProps {
@@ -15,7 +16,7 @@ const MOOD_OPTIONS = [
   { id: 'bleak', label: 'Bleak', emoji: '🖤', examples: 'The Road, Requiem for a Dream' },
 ]
 
-export function MoodSelector({ onSelectMood }: MoodSelectorProps) {
+export const MoodSelector = memo(function MoodSelector({ onSelectMood }: MoodSelectorProps) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
       {MOOD_OPTIONS.map(mood => (
@@ -39,4 +40,4 @@ export function MoodSelector({ onSelectMood }: MoodSelectorProps) {
       ))}
     </div>
   )
-}
+})
