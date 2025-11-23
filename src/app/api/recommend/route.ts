@@ -70,6 +70,14 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Verify embedding exists for vector search
+    if (!sourceMovie.embedding || !Array.isArray(sourceMovie.embedding) || sourceMovie.embedding.length === 0) {
+      return NextResponse.json(
+        { error: 'Source movie has no embedding for similarity search' },
+        { status: 500 }
+      )
+    }
+
     // Find similar movies using vector similarity search
     // This uses Supabase's pgvector extension
     const { data: similarMovies, error: searchError } = await supabase.rpc(

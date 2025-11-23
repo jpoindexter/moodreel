@@ -41,6 +41,7 @@ export const MovieCard = memo(function MovieCard({
         {/* Match badge */}
         <div
           className="absolute top-3 left-3 px-2 py-1 bg-black/70 rounded-lg text-sm font-medium"
+          role="status"
           aria-label={`${matchPercent}% vibe match`}
         >
           <span className="text-purple-400">{matchPercent}%</span>

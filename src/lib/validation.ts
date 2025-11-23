@@ -52,6 +52,24 @@ export function validateLimit(limit: unknown): ValidationResult {
   return { valid: true }
 }
 
+export function validateYear(year: unknown): ValidationResult {
+  if (year === undefined || year === null) {
+    return { valid: true } // Optional parameter
+  }
+
+  const num = Number(year)
+
+  if (isNaN(num) || !Number.isInteger(num)) {
+    return { valid: false, error: 'Year must be an integer' }
+  }
+
+  if (num < 1800 || num > new Date().getFullYear() + 5) {
+    return { valid: false, error: 'Year must be between 1800 and ' + (new Date().getFullYear() + 5) }
+  }
+
+  return { valid: true }
+}
+
 export function validateUUID(id: unknown): ValidationResult {
   if (typeof id !== 'string') {
     return { valid: false, error: 'ID must be a string' }

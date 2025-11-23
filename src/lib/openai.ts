@@ -76,6 +76,12 @@ Be specific and evocative. Focus on the feeling and aesthetic, not plot summary.
       throw new Error('Invalid response structure from OpenAI')
     }
 
+    // Validate vibeProfile arrays
+    const vp = parsed.vibeProfile
+    if (!Array.isArray(vp.mood) || !Array.isArray(vp.visualStyle) || !Array.isArray(vp.themes)) {
+      throw new Error('Invalid vibeProfile arrays from OpenAI')
+    }
+
     return parsed
   } catch (error) {
     if (error instanceof Error && error.message.includes('Invalid response')) {

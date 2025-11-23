@@ -42,14 +42,17 @@ export default function Home() {
         throw new Error(data.error || 'Failed to analyze movie')
       }
 
-      const { movie } = await analyzeRes.json()
-      setSourceMovie(movie)
+      const analyzeData = await analyzeRes.json()
+      if (!analyzeData.movie || !analyzeData.movie.id) {
+        throw new Error('Invalid response from analyze API')
+      }
+      setSourceMovie(analyzeData.movie)
 
       // Then get recommendations
       const recommendRes = await fetch('/api/recommend', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ movieId: movie.id, limit: 8 }),
+        body: JSON.stringify({ movieId: analyzeData.movie.id, limit: 8 }),
       })
 
       if (!recommendRes.ok) {
@@ -57,8 +60,11 @@ export default function Home() {
         throw new Error(data.error || 'Failed to get recommendations')
       }
 
-      const { recommendations: recs } = await recommendRes.json()
-      setRecommendations(recs)
+      const recommendData = await recommendRes.json()
+      if (!Array.isArray(recommendData.recommendations)) {
+        throw new Error('Invalid response from recommend API')
+      }
+      setRecommendations(recommendData.recommendations)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -84,7 +90,7 @@ export default function Home() {
         {/* Header */}
         <header className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <Film className="w-10 h-10 text-purple-500" />
+            <Film className="w-10 h-10 text-purple-500" aria-hidden="true" />
             <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
               MoodReel
             </h1>
@@ -112,14 +118,14 @@ export default function Home() {
         {error && (
           <div className="max-w-xl mx-auto mb-8" role="alert" aria-live="assertive">
             <div className="bg-red-900/20 border border-red-800 rounded-xl p-4 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
               <div className="flex-1">
                 <p className="text-red-300">{error}</p>
                 <button
                   onClick={() => { setError(null); setQuery('') }}
                   className="mt-2 text-sm text-red-400 hover:text-red-300 flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-red-500 rounded"
                 >
-                  <RefreshCw className="w-3 h-3" />
+                  <RefreshCw className="w-3 h-3" aria-hidden="true" />
                   Try again
                 </button>
               </div>
@@ -131,7 +137,7 @@ export default function Home() {
         {sourceMovie && !loading && (
           <div className="mb-12">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-purple-400" />
+              <Sparkles className="w-5 h-5 text-purple-400" aria-hidden="true" />
               Analyzing vibes for
             </h2>
             <div className="bg-zinc-900/50 rounded-xl p-6 border border-zinc-800">

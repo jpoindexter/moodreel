@@ -26,9 +26,9 @@ export async function GET() {
     checks.status = 'degraded'
   }
 
-  // Check API keys are configured
-  checks.services.openai.status = process.env.OPENAI_API_KEY ? 'configured' : 'missing'
-  checks.services.tmdb.status = process.env.TMDB_API_KEY ? 'configured' : 'missing'
+  // Check API keys are configured (don't expose specifics)
+  checks.services.openai.status = process.env.OPENAI_API_KEY ? 'ok' : 'error'
+  checks.services.tmdb.status = process.env.TMDB_API_KEY ? 'ok' : 'error'
 
   const statusCode = checks.status === 'healthy' ? 200 : 503
 

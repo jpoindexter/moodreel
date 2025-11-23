@@ -3,7 +3,7 @@ import { createServerClient } from '@/lib/supabase'
 import { analyzeMovieVibe, generateEmbedding } from '@/lib/openai'
 import { searchMovie, getPosterUrl } from '@/lib/tmdb'
 import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rate-limit'
-import { validateTitle, sanitizeForPrompt } from '@/lib/validation'
+import { validateTitle, validateYear, sanitizeForPrompt } from '@/lib/validation'
 import type { Movie, VibeProfile } from '@/lib/types'
 
 export async function POST(req: NextRequest) {
@@ -41,6 +41,14 @@ export async function POST(req: NextRequest) {
     if (!titleValidation.valid) {
       return NextResponse.json(
         { error: titleValidation.error },
+        { status: 400 }
+      )
+    }
+
+    const yearValidation = validateYear(year)
+    if (!yearValidation.valid) {
+      return NextResponse.json(
+        { error: yearValidation.error },
         { status: 400 }
       )
     }
