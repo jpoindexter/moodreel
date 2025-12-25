@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase'
+import { sql } from '@/lib/db'
 
 export async function GET() {
   const checks = {
@@ -14,13 +14,8 @@ export async function GET() {
 
   // Check database connectivity
   try {
-    const supabase = createServerClient()
-    const { error } = await supabase
-      .from('movies')
-      .select('id')
-      .limit(1)
-
-    checks.services.database.status = error ? 'error' : 'healthy'
+    await sql`SELECT 1`
+    checks.services.database.status = 'healthy'
   } catch {
     checks.services.database.status = 'error'
     checks.status = 'degraded'

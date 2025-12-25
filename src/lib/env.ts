@@ -1,9 +1,7 @@
 // Environment variable validation - run at startup
 export function validateEnv() {
   const required = [
-    'NEXT_PUBLIC_SUPABASE_URL',
-    'NEXT_PUBLIC_SUPABASE_ANON_KEY',
-    'SUPABASE_SERVICE_ROLE_KEY',
+    'DATABASE_URL',
     'OPENAI_API_KEY',
     'TMDB_API_KEY',
   ]
@@ -19,10 +17,8 @@ export function validateEnv() {
 
 // Type-safe env access
 export const env = {
-  supabase: {
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  database: {
+    url: process.env.DATABASE_URL!,
   },
   openai: {
     apiKey: process.env.OPENAI_API_KEY!,

@@ -46,3 +46,62 @@ export interface RecommendRequest {
   movieId: string
   limit?: number
 }
+
+// Graph types for force-directed visualization
+export interface TitleNode {
+  id: string
+  type: 'title'
+  data: {
+    title: string
+    year: number
+    mediaType: 'movie' | 'tv_miniseries' | 'limited_series'
+    status: 'complete' | 'canceled' | 'ongoing'
+    episodeCount?: number
+    posterUrl: string | null
+    vibeSummary: string
+  }
+}
+
+export interface MoodNode {
+  id: string
+  type: 'mood'
+  data: {
+    name: string
+    category: 'tone' | 'atmosphere' | 'emotion' | 'pacing' | 'theme' | 'style'
+    color: string
+  }
+}
+
+export type GraphNode = TitleNode | MoodNode
+
+export interface TitleMoodEdge {
+  source: string
+  target: string
+  type: 'title_mood'
+  weight: number
+  isPrimary: boolean
+}
+
+export interface TitleSimilarityEdge {
+  source: string
+  target: string
+  type: 'title_similarity'
+  weight: number
+  sharedMoods: string[]
+}
+
+export type GraphEdge = TitleMoodEdge | TitleSimilarityEdge
+
+export interface MoodGraph {
+  nodes: GraphNode[]
+  links: GraphEdge[]
+}
+
+export interface GraphFilters {
+  yearRange?: [number, number]
+  mediaTypes?: ('movie' | 'tv_miniseries' | 'limited_series')[]
+  status?: ('complete' | 'canceled' | 'ongoing')[]
+  includeMoods?: string[]
+  excludeMoods?: string[]
+  minSharedMoods?: number
+}

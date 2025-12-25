@@ -70,19 +70,26 @@ export function validateYear(year: unknown): ValidationResult {
   return { valid: true }
 }
 
-export function validateUUID(id: unknown): ValidationResult {
+export function validateMovieId(id: unknown): ValidationResult {
   if (typeof id !== 'string') {
     return { valid: false, error: 'ID must be a string' }
   }
 
+  // Accept UUID format (from analyze API)
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-  if (!uuidRegex.test(id)) {
+  // Accept tmdb-{number} format (from seed data)
+  const tmdbRegex = /^tmdb-\d+$/
+
+  if (!uuidRegex.test(id) && !tmdbRegex.test(id)) {
     return { valid: false, error: 'Invalid movie ID format' }
   }
 
   return { valid: true }
 }
+
+// Alias for backwards compatibility
+export const validateUUID = validateMovieId
 
 // Sanitize title for use in prompts
 export function sanitizeForPrompt(text: string): string {

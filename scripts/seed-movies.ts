@@ -1,10 +1,13 @@
-import { createClient } from '@supabase/supabase-js'
+import { config } from 'dotenv'
+import postgres from 'postgres'
 import OpenAI from 'openai'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Load environment variables from .env.local
+config({ path: '.env.local' })
+
+const sql = postgres(process.env.DATABASE_URL!, {
+  ssl: 'require',
+})
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -92,23 +95,24 @@ async function seed() {
         movie.year
       )
 
-      const { error } = await supabase.from('movies').upsert({
-        title: movie.title,
-        year: movie.year,
-        poster_url: null, // Would fetch from TMDB in production
-        overview: '',
-        vibe_profile: vibeProfile,
-        vibe_summary: vibeSummary,
-        embedding,
-      }, {
-        onConflict: 'tmdb_id',
-      })
+      await sql`
+        INSERT INTO movies (title, year, poster_url, overview, vibe_profile, vibe_summary, embedding)
+        VALUES (
+          ${movie.title},
+          ${movie.year},
+          ${null},
+          ${''},
+          ${JSON.stringify(vibeProfile)},
+          ${vibeSummary},
+          ${JSON.stringify(embedding)}::vector
+        )
+        ON CONFLICT (tmdb_id) DO UPDATE SET
+          vibe_profile = EXCLUDED.vibe_profile,
+          vibe_summary = EXCLUDED.vibe_summary,
+          embedding = EXCLUDED.embedding
+      `
 
-      if (error) {
-        console.error(`Error seeding ${movie.title}:`, error)
-      } else {
-        console.log(`Seeded: ${movie.title}`)
-      }
+      console.log(`Seeded: ${movie.title}`)
 
       // Rate limiting
       await new Promise(r => setTimeout(r, 500))

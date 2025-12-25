@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase'
-import { generateVibeExplanation } from '@/lib/openai'
+import { getMovieById } from '@/lib/db'
+import { getSimilarMovies, getRecommendedMovies, getPosterUrl, getVibeFromGenres } from '@/lib/tmdb'
 import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rate-limit'
 import { validateUUID, validateLimit } from '@/lib/validation'
 import { API_CONFIG } from '@/lib/constants'
-import type { Recommendation, Movie } from '@/lib/types'
+import type { Recommendation } from '@/lib/types'
 
 export async function POST(req: NextRequest) {
   try {
@@ -56,92 +56,99 @@ export async function POST(req: NextRequest) {
     const { min, default: defaultLimit, max } = API_CONFIG.RECOMMENDATION_LIMITS
     const safeLimit = Math.min(Math.max(Number(limit) || defaultLimit, min), max)
 
-    const supabase = createServerClient()
+    // Handle tmdb-{id} format IDs (from TMDB recommendations not in our DB)
+    let tmdbIdToUse: number
+    let sourceTitle: string
 
-    // Get the source movie
-    const { data: sourceMovie, error: sourceError } = await supabase
-      .from('movies')
-      .select('*')
-      .eq('id', movieId)
-      .single()
-
-    if (sourceError || !sourceMovie) {
-      return NextResponse.json(
-        { error: 'Source movie not found' },
-        { status: 404 }
-      )
-    }
-
-    // Verify embedding exists for vector search
-    if (!sourceMovie.embedding || !Array.isArray(sourceMovie.embedding) || sourceMovie.embedding.length === 0) {
-      return NextResponse.json(
-        { error: 'Source movie has no embedding for similarity search' },
-        { status: 500 }
-      )
-    }
-
-    // Find similar movies using vector similarity search
-    // This uses Supabase's pgvector extension
-    const { data: similarMovies, error: searchError } = await supabase.rpc(
-      'match_movies',
-      {
-        query_embedding: sourceMovie.embedding,
-        match_threshold: API_CONFIG.SIMILARITY_THRESHOLD,
-        match_count: safeLimit + 1, // +1 to exclude the source movie
-      }
-    )
-
-    if (searchError) {
-      console.error('Vector search error:', searchError)
-      return NextResponse.json(
-        { error: 'Failed to find similar movies' },
-        { status: 500 }
-      )
-    }
-
-    // Filter out the source movie and build recommendations
-    const filteredMovies = (similarMovies || [])
-      .filter((m: { id: string }) => m.id !== movieId)
-      .slice(0, safeLimit)
-
-    // Generate explanations for each recommendation with graceful degradation
-    const explanationResults = await Promise.allSettled(
-      filteredMovies.map(async (m: Movie & { similarity: number }) => {
-        const explanation = await generateVibeExplanation(
-          sourceMovie.title,
-          m.title,
-          sourceMovie.vibeSummary,
-          m.vibeSummary
+    if (movieId.startsWith('tmdb-')) {
+      // Extract TMDB ID directly from the temporary ID
+      const tmdbId = parseInt(movieId.replace('tmdb-', ''), 10)
+      if (isNaN(tmdbId)) {
+        return NextResponse.json(
+          { error: 'Invalid TMDB ID format' },
+          { status: 400 }
         )
-        return { movie: m, explanation }
-      })
-    )
+      }
+      tmdbIdToUse = tmdbId
+      sourceTitle = 'this movie' // We don't have the title for tmdb-prefixed IDs
+    } else {
+      // Get the source movie from our database
+      const sourceMovie = await getMovieById(movieId)
 
-    // Build recommendations, using fallback for failed explanations
-    const recommendations: Recommendation[] = explanationResults
-      .map((result, index) => {
-        const m = filteredMovies[index]
-        const explanation = result.status === 'fulfilled'
-          ? result.value.explanation
-          : `Similar vibe to ${sourceMovie.title}` // Fallback explanation
+      if (!sourceMovie) {
+        return NextResponse.json(
+          { error: 'Source movie not found' },
+          { status: 404 }
+        )
+      }
 
-        return {
-          movie: {
-            id: m.id,
-            title: m.title,
-            year: m.year,
-            posterUrl: m.posterUrl,
-            overview: m.overview,
-            vibeProfile: m.vibeProfile,
-            vibeSummary: m.vibeSummary,
-            embedding: [], // Don't send embeddings to client
-            tmdbId: m.tmdbId,
-            imdbId: m.imdbId,
+      if (!sourceMovie.tmdbId) {
+        return NextResponse.json(
+          { error: 'Source movie has no TMDB ID for fetching similar movies' },
+          { status: 400 }
+        )
+      }
+
+      tmdbIdToUse = sourceMovie.tmdbId
+      sourceTitle = sourceMovie.title
+    }
+
+    // Fetch similar movies from TMDB - fast, no OpenAI calls
+    const [tmdbSimilar, tmdbRecommended] = await Promise.all([
+      getSimilarMovies(tmdbIdToUse, safeLimit),
+      getRecommendedMovies(tmdbIdToUse, safeLimit)
+    ])
+
+    // Combine and dedupe by TMDB ID
+    const seenIds = new Set<number>()
+    const candidateMovies = [...tmdbSimilar, ...tmdbRecommended].filter(m => {
+      if (seenIds.has(m.id) || m.id === tmdbIdToUse) return false
+      seenIds.add(m.id)
+      return true
+    }).slice(0, safeLimit)
+
+    if (candidateMovies.length === 0) {
+      return NextResponse.json({ recommendations: [] })
+    }
+
+    // Build recommendations from TMDB data with genre-based vibe extraction
+    const recommendations: Recommendation[] = candidateMovies.map((tmdbMovie, index) => {
+      const movieYear = tmdbMovie.release_date
+        ? new Date(tmdbMovie.release_date).getFullYear()
+        : new Date().getFullYear()
+
+      // Use position-based "similarity" since TMDB already ranked them
+      const similarity = 0.95 - (index * 0.05)
+
+      // Extract mood from genres
+      const genreVibe = getVibeFromGenres(tmdbMovie.genre_ids || [])
+
+      return {
+        movie: {
+          id: `tmdb-${tmdbMovie.id}`, // Temporary ID since not in our DB
+          title: tmdbMovie.title,
+          year: movieYear,
+          posterUrl: getPosterUrl(tmdbMovie.poster_path),
+          overview: tmdbMovie.overview,
+          vibeProfile: {
+            mood: genreVibe.mood,
+            visualStyle: [],
+            narrativeEnergy: '',
+            themes: [],
+            emotionalColor: '',
+            pacing: '',
+            atmosphere: genreVibe.atmosphere,
+            era: ''
           },
-          similarityScore: m.similarity,
-          vibeExplanation: explanation,
-        }
-      })
+          vibeSummary: tmdbMovie.overview?.slice(0, 150) + '...' || '',
+          embedding: [],
+          tmdbId: tmdbMovie.id,
+          imdbId: tmdbMovie.imdb_id,
+        },
+        similarityScore: similarity,
+        vibeExplanation: `Recommended based on similar themes and style to ${sourceTitle}`,
+      }
+    })
 
     return NextResponse.json(
       { recommendations },

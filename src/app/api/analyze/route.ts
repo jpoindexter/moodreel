@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase'
-import { analyzeMovieVibe, generateEmbedding } from '@/lib/openai'
+import { findMovieByTitle, findMovieByTmdbId, insertMovie } from '@/lib/db'
+import { analyzeMovieVibe, generateEmbedding, isOllamaAvailable } from '@/lib/ollama'
 import { searchMovie, getPosterUrl } from '@/lib/tmdb'
 import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rate-limit'
 import { validateTitle, validateYear, sanitizeForPrompt } from '@/lib/validation'
@@ -55,15 +55,8 @@ export async function POST(req: NextRequest) {
 
     const sanitizedTitle = sanitizeForPrompt(title)
 
-    const supabase = createServerClient()
-
     // Check if we already have this movie
-    const { data: existing } = await supabase
-      .from('movies')
-      .select('*')
-      .ilike('title', sanitizedTitle)
-      .limit(1)
-      .single()
+    const existing = await findMovieByTitle(sanitizedTitle)
 
     if (existing) {
       return NextResponse.json({ movie: existing })
@@ -79,12 +72,27 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Check if we already have this movie by TMDB ID (more reliable than title)
+    const existingByTmdb = await findMovieByTmdbId(tmdbMovie.id)
+    if (existingByTmdb) {
+      return NextResponse.json({ movie: existingByTmdb })
+    }
+
     // Safe date parsing
     const movieYear = tmdbMovie.release_date
       ? new Date(tmdbMovie.release_date).getFullYear()
       : new Date().getFullYear()
 
-    // Analyze the movie's vibe using GPT
+    // Check if Ollama is available
+    const ollamaAvailable = await isOllamaAvailable()
+    if (!ollamaAvailable) {
+      return NextResponse.json(
+        { error: 'Ollama is not running. Please start Ollama with: ollama serve' },
+        { status: 503 }
+      )
+    }
+
+    // Analyze the movie's vibe using Ollama (local LLM - free!)
     const vibeAnalysis = await analyzeMovieVibe(tmdbMovie.title, movieYear)
 
     const vibeProfile: VibeProfile = vibeAnalysis.vibeProfile
@@ -119,29 +127,24 @@ export async function POST(req: NextRequest) {
     }
 
     // Store in database
-    const { data: newMovie, error } = await supabase
-      .from('movies')
-      .insert(movie)
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Database error:', error)
+    try {
+      const newMovie = await insertMovie(movie)
+      return NextResponse.json(
+        { movie: newMovie },
+        {
+          headers: {
+            'Cache-Control': 'public, max-age=86400',
+            'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+          }
+        }
+      )
+    } catch (dbError) {
+      console.error('Database error:', dbError)
       return NextResponse.json(
         { error: 'Failed to save movie' },
         { status: 500 }
       )
     }
-
-    return NextResponse.json(
-      { movie: newMovie },
-      {
-        headers: {
-          'Cache-Control': 'public, max-age=86400',
-          'X-RateLimit-Remaining': String(rateLimitResult.remaining),
-        }
-      }
-    )
   } catch (error) {
     console.error('Analysis error:', error)
     return NextResponse.json(
